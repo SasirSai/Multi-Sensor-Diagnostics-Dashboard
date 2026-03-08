@@ -50,6 +50,10 @@ def extract_features(signal):
     
     return [float(mean), float(std), float(rms), kurt, skw, float(ptp)]
 
+@app.get("/")
+async def root():
+    return {"message": "Diagnostics Engine API is Live! Please send POST requests to the /predict endpoint."}
+
 @app.post("/predict")
 async def predict(
     vib_file: UploadFile = File(...),
