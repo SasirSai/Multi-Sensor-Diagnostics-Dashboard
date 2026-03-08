@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
+
     // File Input Logic
     const inputs = ['vib', 'acous', 'tdms'];
     const files = { vib: null, acous: null, tdms: null };
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Form Submission
     document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         // Show loading state
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('resultBanner').classList.add('hidden');
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Update this URL if hosted externally. For local test, it's localhost:5000
-            const response = await fetch('http://localhost:5000/predict', {
+            const response = await fetch('https://multi-sensor-diagnostics-dashboard.onrender.com', {
                 method: 'POST',
                 body: formData
             });
@@ -101,14 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Update Banner
         const stateEl = document.getElementById('predictedState');
         const bannerEl = document.getElementById('resultBanner');
-        
+
         const descriptiveState = faultDescriptions[data.prediction] || data.prediction;
         stateEl.textContent = descriptiveState;
-        
+
         // Remove previous state classes
         bannerEl.className = 'diagnosis-banner glass-panel';
         stateEl.className = 'state-text';
-        
+
         // Add new state class for coloring (keep original raw class name for CSS hooks)
         bannerEl.classList.add(data.prediction);
         stateEl.classList.add(data.prediction);
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Colors: Soft Green for Normal, Soft Red for faults
         const bgColors = labels.map(l => l.includes('Normal') ? 'rgba(52, 211, 153, 0.7)' : 'rgba(251, 113, 133, 0.7)');
         const borderColors = labels.map(l => l.includes('Normal') ? 'rgba(52, 211, 153, 1)' : 'rgba(251, 113, 133, 1)');
-        
+
         if (confidenceChartInstance) {
             confidenceChartInstance.destroy();
         }
@@ -195,14 +195,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateRadarChart(features, prediction) {
         const ctx = document.getElementById('radarChart').getContext('2d');
-        
+
         // Select key features to show on radar
         const keyFeats = [
-            'Vib_RMS', 'Vib_Kurtosis', 'Vib_P2P', 
+            'Vib_RMS', 'Vib_Kurtosis', 'Vib_P2P',
             'Acoustic_RMS', 'Acoustic_Kurtosis', 'Acoustic_P2P',
             'TDMS_Ch0_RMS', 'TDMS_Ch2_RMS'
         ];
-        
+
         // Friendly names for radar chart
         const friendlyNames = {
             'Vib_RMS': 'Vibration RMS',
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const displayLabels = keyFeats.map(k => friendlyNames[k] || k.replace(/_/g, ' '));
-        
+
         // Log transform for visual spread
         const rawValues = keyFeats.map(k => features[k] || 0);
         const normValues = rawValues.map(v => Math.log1p(Math.abs(v)));
@@ -259,9 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 plugins: {
                     legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true, color: '#f1f5f9' } },
                     tooltip: {
-                         backgroundColor: 'rgba(11, 14, 20, 0.9)',
-                         borderColor: 'rgba(255,255,255,0.1)',
-                         borderWidth: 1
+                        backgroundColor: 'rgba(11, 14, 20, 0.9)',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1
                     }
                 }
             }
@@ -271,19 +271,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateFeaturePills(features) {
         const container = document.getElementById('featurePills');
         container.innerHTML = ''; // Clear existing
-        
+
         // Show first 15 features to not overwhelm
         Object.entries(features).slice(0, 15).forEach(([key, value]) => {
             const pill = document.createElement('div');
             pill.className = 'pill';
-            
+
             const label = document.createElement('span');
             label.textContent = key.replace(/_/g, ' ');
-            
+
             const val = document.createElement('strong');
             // Format number nicely
             val.textContent = Math.abs(value) < 0.01 && value !== 0 ? value.toExponential(2) : value.toFixed(3);
-            
+
             pill.appendChild(label);
             pill.appendChild(val);
             container.appendChild(pill);
