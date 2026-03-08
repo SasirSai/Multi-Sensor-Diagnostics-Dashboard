@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic File Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <svg class="icon icon-engine" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <h1>Machine Diagnostics Engine</h1>
+            <span class="badge">Model: Random Forest V1</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Sidebar: Upload -->
+        <aside class="upload-section glass-panel">
+            <h2>Data Input</h2>
+            <p class="subtitle">Upload synchronized sensor batches</p>
+            
+            <form id="uploadForm">
+                <div class="drop-zone" id="vibDrop">
+                    <span class="drop-icon">〰️</span>
+                    <p><strong>Vibration (.mat)</strong></p>
+                    <p class="helper-text">Measures mechanical oscillations</p>
+                    <p>Drag & drop or click</p>
+                    <input type="file" id="vibFile" accept=".mat" required>
+                    <span class="filename" id="vibName"></span>
+                </div>
+
+                <div class="drop-zone" id="acousDrop">
+                    <span class="drop-icon">🔊</span>
+                    <p><strong>Acoustic (.mat)</strong></p>
+                    <p class="helper-text">Measures sound and noise emissions</p>
+                    <p>Drag & drop or click</p>
+                    <input type="file" id="acousFile" accept=".mat" required>
+                    <span class="filename" id="acousName"></span>
+                </div>
+
+                <div class="drop-zone" id="tdmsDrop">
+                    <span class="drop-icon">⚡</span>
+                    <p><strong>Current & Temp (.tdms)</strong></p>
+                    <p class="helper-text">Measures electrical current & heat</p>
+                    <p>Drag & drop or click</p>
+                    <input type="file" id="tdmsFile" accept=".tdms" required>
+                    <span class="filename" id="tdmsName"></span>
+                </div>
+
+
+                <button type="submit" class="btn-primary" id="analyzeBtn" disabled>Analyze Telemetry</button>
+            </form>
+
+            <div id="loading" class="hidden">
+                <div class="spinner"></div>
+                <p>Extracting Features & Inferring...</p>
+            </div>
+        </aside>
+
+        <!-- Main Content: Results -->
+        <section class="results-section">
+            
+            <!-- Diagnosis Banner -->
+            <div class="diagnosis-banner glass-panel hidden" id="resultBanner">
+                <div class="diagnosis-header">
+                    <h2>Predicted Machine State</h2>
+                    <span class="confidence-tag" id="mainConfidence">--%</span>
+                </div>
+                <h1 class="state-text normal" id="predictedState">Awaiting Data...</h1>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Confidence Probabilities -->
+                <div class="chart-card glass-panel hidden" id="probCard">
+                    <h3>Diagnosis Confidence Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="confidenceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Feature Radar -->
+                <div class="chart-card glass-panel hidden" id="radarCard">
+                    <h3>Sensor Feature Profile (Fingerprint)</h3>
+                    <p class="card-desc">Visual representation of key signal characteristics.</p>
+                    <div class="chart-container radar-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- XAI Section -->
+            <div class="xai-section glass-panel hidden" id="xaiCard">
+                <h3>Extracted Telemetry Features</h3>
+                <div class="feature-pills" id="featurePills">
+                    <!-- Feature pills will be injected here -->
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
