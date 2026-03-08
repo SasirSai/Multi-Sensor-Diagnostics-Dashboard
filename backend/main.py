@@ -22,7 +22,8 @@ app.add_middleware(
 )
 
 # Load the trained model and metadata
-MODEL_DIR = r"C:\Users\sasir\OneDrive\Documents\Robotics\models"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_DIR = os.path.join(BASE_DIR, "models")
 try:
     clf = joblib.load(os.path.join(MODEL_DIR, "rf_model.joblib"))
     feature_names = joblib.load(os.path.join(MODEL_DIR, "feature_names.joblib"))

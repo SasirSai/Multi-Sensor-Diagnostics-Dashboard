@@ -25,7 +25,8 @@ def extract_features(signal):
     return [mean, std, rms, kurt, skw, ptp]
 
 def main():
-    dataset_dir = r"C:\Users\sasir\OneDrive\Documents\Robotics\Dataset"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    dataset_dir = os.path.join(BASE_DIR, "Dataset")
     vibration_dir = os.path.join(dataset_dir, "vibration")
     acoustic_dir = os.path.join(dataset_dir, "acoustic")
     current_temp_dir = os.path.join(dataset_dir, "current,temp")
@@ -103,7 +104,7 @@ def main():
     clf = RandomForestClassifier(n_estimators=100, random_state=42)
     clf.fit(X, y)
     
-    model_dir = r"C:\Users\sasir\OneDrive\Documents\Robotics\models"
+    model_dir = os.path.join(BASE_DIR, "models")
     os.makedirs(model_dir, exist_ok=True)
     
     model_path = os.path.join(model_dir, "rf_model.joblib")
