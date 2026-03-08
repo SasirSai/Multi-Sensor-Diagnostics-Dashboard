@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Update this URL if hosted externally. For local test, it's localhost:5000
-            const response = await fetch('https://multi-sensor-diagnostics-dashboard.onrender.com', {
+            const response = await fetch('https://multi-sensor-diagnostics-dashboard.onrender.com/predict', {
                 method: 'POST',
                 body: formData
             });
