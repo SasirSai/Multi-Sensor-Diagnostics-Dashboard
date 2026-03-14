@@ -101,8 +101,20 @@ def main():
     y = np.array(labels_list)
 
     print("Training Model...")
-    clf = RandomForestClassifier(n_estimators=100, random_state=42)
+    clf = RandomForestClassifier(n_estimators=100, random_state=42, oob_score=True)
     clf.fit(X, y)
+    
+    import json
+    importances = clf.feature_importances_
+    indices = np.argsort(importances)[::-1][:5]
+    top_features = [columns[i].replace("_", " ") for i in indices]
+    
+    analytics = {
+        "accuracy": round(clf.oob_score_ * 100, 2),
+        "total_samples": len(X),
+        "top_features": top_features,
+        "classes": list(clf.classes_)
+    }
     
     model_dir = os.path.join(BASE_DIR, "models")
     os.makedirs(model_dir, exist_ok=True)
@@ -114,6 +126,9 @@ def main():
     joblib.dump(clf, model_path)
     joblib.dump(columns[:len(features_list[0])], features_path)
     joblib.dump(clf.classes_, classes_path)
+    
+    with open(os.path.join(model_dir, "analytics.json"), "w") as f:
+        json.dump(analytics, f)
     
     print(f"Model and metadata successfully exported to {model_dir}")
 

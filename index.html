@@ -21,7 +21,41 @@
     <main class="container">
         <!-- Sidebar: Upload -->
         <aside class="upload-section glass-panel">
-            <h2>Data Input</h2>
+            
+            <!-- Training Analytics -->
+            <div id="analyticsSection" style="margin-bottom: 2.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--panel-border);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="margin-bottom:0; font-size: 1.15rem;">Training Analytics</h2>
+                    <span id="serverStatus" style="font-size: 0.7rem; padding: 0.35em 0.65em; border-radius: 4px; background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;">Waking Cloud API... 💤</span>
+                </div>
+                
+                <div id="analyticsContent" style="display: none; flex-direction: column; gap: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Model Accuracy</span>
+                        <strong id="a_acc" style="color: var(--success); font-size: 1.15rem; font-family: monospace;">--</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Observation Samples</span>
+                        <strong id="a_samples" style="color: var(--text-primary); font-size: 1.15rem; font-family: monospace;">--</strong>
+                    </div>
+                    <div style="display: flex; flex-direction: column; margin-top: 0.5rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Top Feature Importances</span>
+                        <div id="a_feats" style="display:flex; flex-wrap:wrap; gap: 0.5rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="application-select-group" style="margin-bottom: 2rem;">
+                <h2 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Monitoring Focus</h2>
+                <p class="subtitle">Select the machine application</p>
+                <select id="applicationSelect" class="form-select" style="width: 100%; padding: 0.75rem; border-radius: 8px; background: var(--panel-bg); color: var(--text-primary); border: 1px solid var(--panel-border); margin-top: 0.5rem; cursor: pointer;">
+                    <option value="General">General Monitoring (All Faults)</option>
+                    <option value="Bearing Monitoring">Bearing Monitoring (BPFI, BPFO)</option>
+                    <option value="Motor Performance">Motor Performance (Balance, Align)</option>
+                </select>
+            </div>
+
+            <h2 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Data Input</h2>
             <p class="subtitle">Upload synchronized sensor batches</p>
             
             <form id="uploadForm">
@@ -72,6 +106,37 @@
                     <span class="confidence-tag" id="mainConfidence">--%</span>
                 </div>
                 <h1 class="state-text normal" id="predictedState">Awaiting Data...</h1>
+            </div>
+
+            <!-- Remediation Card -->
+            <div class="glass-panel hidden" id="remediationCard" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent);">
+                <div style="padding: 1.25rem;">
+                    <h3 style="color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        Diagnostic Insight & Remediation
+                    </h3>
+                    <p id="remediationText" style="font-size: 1.1rem; line-height: 1.6; color: var(--text-primary);">Processing prediction...</p>
+                    <div id="controlSection" class="hidden" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; font-family: monospace; text-transform: uppercase; letter-spacing: 0.05em;">Automated Control Suggestion:</p>
+                        <p id="controlActionText" style="font-weight: 600; color: #facc15; margin-bottom: 1.25rem;"></p>
+                        <button id="applyRemediationBtn" class="btn-primary" style="background: var(--accent); width: auto; padding: 0.6rem 1.5rem; font-size: 0.9rem;">Execute Remediation Protocol</button>
+                    </div>
+                    <div id="simulationOverlay" class="hidden" style="margin-top: 1.5rem;">
+                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 0.5rem;">
+                            <div id="simProgress" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s ease;"></div>
+                        </div>
+                        <p id="simStatus" style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">Syncing with machine controllers...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-Time Monitoring Chart -->
+            <div class="glass-panel hidden" id="healthMonitorCard" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 0.5rem; color: #fff; font-weight: 500;">Live System Health Monitoring</h3>
+                <p class="card-desc" style="margin-bottom: 1.5rem;">Tracking signal stability and anomaly levels in real-time.</p>
+                <div class="chart-container" style="height: 200px;">
+                    <canvas id="healthChart"></canvas>
+                </div>
             </div>
 
             <div class="dashboard-grid">

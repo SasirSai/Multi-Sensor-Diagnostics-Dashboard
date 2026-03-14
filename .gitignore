@@ -1,0 +1,8 @@
+temp_uploads/
+__pycache__/
+*.joblib
+*.mat
+*.tdms
+.python-version
+backend/__pycache__/
+models/analytics.json

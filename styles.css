@@ -328,6 +328,14 @@ h1 {
     height: 320px;
 }
 
+#healthMonitorCard {
+    border-left: 4px solid var(--accent-blue);
+}
+
+#healthChart {
+    filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.2));
+}
+
 /* Features Pills Matrix */
 .xai-section h3 {
     font-size: 1.05rem;
