@@ -36,10 +36,7 @@ except Exception as e:
 def extract_features(signal):
     """Extract statistical features from a 1D time-series signal."""
     if len(signal) == 0:
-        return [0]*6
-    signal = signal[~np.isnan(signal)]
-    if len(signal) == 0:
-        return [0]*6
+        return [0]*8
         
     mean = np.mean(signal)
     std = np.std(signal)
@@ -48,7 +45,12 @@ def extract_features(signal):
     skw = float(skew(signal))
     ptp = np.ptp(signal)
     
-    return [float(mean), float(std), float(rms), kurt, skw, float(ptp)]
+    # Frequency domain features (FFT)
+    fft_vals = np.abs(np.fft.rfft(signal))
+    spectral_energy = np.sum(fft_vals**2) / len(fft_vals)
+    peak_freq = np.argmax(fft_vals)
+    
+    return [float(mean), float(std), float(rms), kurt, skw, float(ptp), float(spectral_energy), float(peak_freq)]
 
 # define mappings for applications and remediation
 APPLICATION_MAPPING = {
