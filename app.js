@@ -15,16 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 data.top_features.forEach(feat => {
                     const tag = document.createElement('span');
                     tag.textContent = feat;
-                    tag.style.cssText = 'font-size: 0.7rem; padding: 0.35rem 0.6rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; color: #bed0eb; letter-spacing: 0.02em;';
+                    tag.style.cssText = 'font-size: 0.7rem; padding: 0.35rem 0.6rem; background: #F1F5F9; border: 1px solid var(--panel-border); border-radius: 6px; color: var(--text-secondary); letter-spacing: 0.02em;';
                     featsContainer.appendChild(tag);
                 });
 
                 // Update Status Badge
                 const statusBadge = document.getElementById('serverStatus');
                 statusBadge.textContent = 'API ONLINE 🟢';
-                statusBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                statusBadge.style.background = 'rgba(34, 197, 94, 0.1)';
                 statusBadge.style.color = 'var(--success)';
-                statusBadge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                statusBadge.style.borderColor = 'rgba(34, 197, 94, 0.2)';
 
                 // Populate Applications if available
                 if (data.applications) {
@@ -103,6 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show loading state
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('resultBanner').classList.add('hidden');
+        document.getElementById('kpiModel').classList.add('hidden');
+        document.getElementById('kpiAccuracy').classList.add('hidden');
+        document.getElementById('kpiFocus').classList.add('hidden');
         document.getElementById('probCard').classList.add('hidden');
         document.getElementById('radarCard').classList.add('hidden');
         document.getElementById('xaiCard').classList.add('hidden');
@@ -153,6 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('xaiCard').classList.remove('hidden');
         document.getElementById('remediationCard').classList.remove('hidden');
         document.getElementById('healthMonitorCard').classList.remove('hidden');
+        document.getElementById('kpiModel').classList.remove('hidden');
+        document.getElementById('kpiAccuracy').classList.remove('hidden');
+        document.getElementById('kpiFocus').classList.remove('hidden');
 
         updateConfidenceChart(data.probabilities);
         updateRadarChart(data.features, data.prediction);
@@ -167,8 +173,8 @@ document.addEventListener('DOMContentLoaded', () => {
         stateEl.textContent = descriptiveState;
 
         // Remove previous state classes
-        bannerEl.className = 'diagnosis-banner glass-panel';
-        stateEl.className = 'state-text';
+        bannerEl.className = 'kpi-card glass-card yellow-card';
+        stateEl.className = 'kpi-val';
 
         // Add new state class for coloring (keep original raw class name for CSS hooks)
         bannerEl.classList.add(data.prediction);
@@ -208,17 +214,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Charting Configuration
-    Chart.defaults.color = '#8b9bb4'; // text-secondary
-    Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+    Chart.defaults.color = '#64748B'; // text-secondary
+    Chart.defaults.font.family = "'Outfit', 'Inter', -apple-system, sans-serif";
 
     function updateConfidenceChart(probs) {
         const ctx = document.getElementById('confidenceChart').getContext('2d');
         const labels = Object.keys(probs);
         const values = Object.values(probs).map(v => v * 100);
 
-        // Colors: Soft Green for Normal, Soft Red for faults
-        const bgColors = labels.map(l => l.includes('Normal') ? 'rgba(52, 211, 153, 0.7)' : 'rgba(251, 113, 133, 0.7)');
-        const borderColors = labels.map(l => l.includes('Normal') ? 'rgba(52, 211, 153, 1)' : 'rgba(251, 113, 133, 1)');
+        // Colors: Light success (lime) and danger (red)
+        const bgColors = labels.map(l => l.includes('Normal') ? 'rgba(132, 204, 22, 0.75)' : 'rgba(239, 68, 68, 0.75)');
+        const borderColors = labels.map(l => l.includes('Normal') ? 'rgba(132, 204, 22, 1)' : 'rgba(239, 68, 68, 1)');
 
         if (confidenceChartInstance) {
             confidenceChartInstance.destroy();
@@ -243,10 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
-                        backgroundColor: 'rgba(11, 14, 20, 0.9)',
-                        titleColor: '#fff',
-                        bodyColor: '#e2e8f0',
-                        borderColor: 'rgba(255,255,255,0.1)',
+                        backgroundColor: '#FFFFFF',
+                        titleColor: '#0F172A',
+                        bodyColor: '#64748B',
+                        borderColor: '#E2E8F0',
                         borderWidth: 1,
                         padding: 12,
                         callbacks: {
@@ -258,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     y: {
                         beginAtZero: true,
                         max: 100,
-                        grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                        grid: { color: 'rgba(15, 23, 42, 0.05)' },
                         border: { display: false }
                     },
                     x: {
@@ -309,12 +315,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 datasets: [{
                     label: prediction + ' Profile',
                     data: normValues,
-                    backgroundColor: 'rgba(99, 102, 241, 0.15)', // Indigo transparent
-                    borderColor: 'rgba(99, 102, 241, 0.8)',
-                    pointBackgroundColor: '#0b0e14',
-                    pointBorderColor: 'rgba(99, 102, 241, 1)',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgba(99, 102, 241, 1)',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)', // Secondary accent (Cyan) transparent
+                    borderColor: 'rgba(6, 182, 212, 0.8)',
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: 'rgba(6, 182, 212, 1)',
+                    pointHoverBackgroundColor: '#ffffff',
+                    pointHoverBorderColor: 'rgba(6, 182, 212, 1)',
                     pointBorderWidth: 2,
                     pointRadius: 3,
                     pointHoverRadius: 5,
@@ -327,17 +333,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements: { line: { tension: 0.4, borderWidth: 2 } },
                 scales: {
                     r: {
-                        angleLines: { color: 'rgba(255, 255, 255, 0.04)' },
-                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
-                        pointLabels: { color: '#8b9bb4', font: { size: 10, family: 'Inter' } },
+                        angleLines: { color: 'rgba(15, 23, 42, 0.05)' },
+                        grid: { color: 'rgba(15, 23, 42, 0.05)' },
+                        pointLabels: { color: '#64748B', font: { size: 10, family: 'Outfit' } },
                         ticks: { display: false, max: Math.max(...normValues) * 1.2 }
                     }
                 },
                 plugins: {
-                    legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true, color: '#f1f5f9' } },
+                    legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true, color: '#64748B' } },
                     tooltip: {
-                        backgroundColor: 'rgba(11, 14, 20, 0.9)',
-                        borderColor: 'rgba(255,255,255,0.1)',
+                        backgroundColor: '#FFFFFF',
+                        borderColor: '#E2E8F0',
+                        titleColor: '#0F172A',
+                        bodyColor: '#64748B',
                         borderWidth: 1
                     }
                 }
@@ -365,8 +373,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     {
                         label: 'System Stability %',
                         data: stabilityData,
-                        borderColor: isNormal ? '#10b981' : '#f43f5e',
-                        backgroundColor: isNormal ? 'rgba(16, 185, 129, 0.05)' : 'rgba(244, 63, 94, 0.05)',
+                        borderColor: isNormal ? '#22C55E' : '#EF4444',
+                        backgroundColor: isNormal ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)',
                         borderWidth: 2,
                         pointRadius: 0,
                         fill: true,
@@ -375,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     {
                         label: 'Anomaly Score',
                         data: anomalyData,
-                        borderColor: isNormal ? 'rgba(139, 155, 180, 0.3)' : '#f59e0b',
+                        borderColor: isNormal ? 'rgba(15, 23, 42, 0.15)' : '#F59E0B',
                         borderDash: [5, 5],
                         borderWidth: 2,
                         pointRadius: 0,
@@ -388,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#5e6e87', font: { size: 10 } } },
+                    y: { min: 0, max: 100, grid: { color: 'rgba(15, 23, 42, 0.05)' }, ticks: { color: '#64748B', font: { size: 10 } } },
                     x: { display: false }
                 },
                 plugins: { 
@@ -396,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         display: true, 
                         position: 'top', 
                         align: 'end',
-                        labels: { boxWidth: 10, font: { size: 11 }, color: '#8b9bb4' } 
+                        labels: { boxWidth: 10, font: { size: 11 }, color: '#64748B' } 
                     } 
                 }
             }
@@ -446,14 +454,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 stabilitySet.data.shift();
                 const newStability = 40 + (p/100) * 55 + Math.random() * 5;
                 stabilitySet.data.push(newStability);
-                stabilitySet.borderColor = newStability > 85 ? '#10b981' : '#f43f5e';
+                stabilitySet.borderColor = newStability > 85 ? '#22C55E' : '#EF4444';
                 
                 // Anomaly Chart Update
                 const anomalySet = healthChartInstance.data.datasets[1];
                 anomalySet.data.shift();
                 const newAnomaly = 70 - (p/100) * 65 + Math.random() * 5;
                 anomalySet.data.push(newAnomaly);
-                anomalySet.borderColor = newAnomaly < 20 ? 'rgba(139, 155, 180, 0.3)' : '#f59e0b';
+                anomalySet.borderColor = newAnomaly < 20 ? 'rgba(15, 23, 42, 0.15)' : '#F59E0B';
 
                 healthChartInstance.update('none');
             }
@@ -477,8 +485,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const status = document.getElementById('simStatus');
 
         // Transition to Normal
-        bannerEl.className = 'diagnosis-banner glass-panel Normal';
-        stateEl.className = 'state-text Normal';
+        bannerEl.className = 'kpi-card glass-card yellow-card Normal';
+        stateEl.className = 'kpi-val Normal';
         stateEl.textContent = 'Normal (Remediated)';
         
         remediationText.textContent = 'Remediation successful. Machine state has been restored to normal operating conditions through automated control adjustment.';
@@ -492,8 +500,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (radarChartInstance) {
             radarChartInstance.data.datasets[0].label = 'Normal (Remediated) Profile';
             radarChartInstance.data.datasets[0].data = radarChartInstance.data.datasets[0].data.map(() => 0.1); // Low variance
-            radarChartInstance.data.datasets[0].borderColor = '#10b981';
+            radarChartInstance.data.datasets[0].borderColor = '#22C55E';
             radarChartInstance.update();
         }
+    }
+
+    // Real-time search filter for telemetry features
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const pills = document.querySelectorAll('.feature-pills .pill');
+            pills.forEach(pill => {
+                const label = pill.querySelector('span').textContent.toLowerCase();
+                if (label.includes(query)) {
+                    pill.style.display = 'flex';
+                } else {
+                    pill.style.display = 'none';
+                }
+            });
+        });
     }
 });

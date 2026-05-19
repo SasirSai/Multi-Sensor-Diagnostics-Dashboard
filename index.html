@@ -3,170 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diagnostic File Analyzer</title>
+    <title>SensX - Multi-Sensor Diagnostic Engine</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <header>
-        <div class="header-content">
-            <svg class="icon icon-engine" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <h1>Machine Diagnostics Engine</h1>
-            <span class="badge">Model: Random Forest V1</span>
-        </div>
-    </header>
-
-    <main class="container">
-        <!-- Sidebar: Upload -->
-        <aside class="upload-section glass-panel">
+    <!-- Side Upload Panel -->
+    <aside class="upload-sidebar">
+        <!-- Training Analytics -->
+        <div id="analyticsSection" class="sidebar-card">
+            <div class="card-header">
+                <h2>Training Analytics</h2>
+                <span id="serverStatus" class="status-indicator">Waking API...</span>
+            </div>
             
-            <!-- Training Analytics -->
-            <div id="analyticsSection" style="margin-bottom: 2.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--panel-border);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h2 style="margin-bottom:0; font-size: 1.15rem;">Training Analytics</h2>
-                    <span id="serverStatus" style="font-size: 0.7rem; padding: 0.35em 0.65em; border-radius: 4px; background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;">Waking Cloud API... 💤</span>
+            <div id="analyticsContent" class="analytics-metrics" style="display: none;">
+                <div class="metric-row">
+                    <span class="label">Accuracy</span>
+                    <strong id="a_acc" class="value text-lime">--</strong>
                 </div>
-                
-                <div id="analyticsContent" style="display: none; flex-direction: column; gap: 0.85rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Model Accuracy</span>
-                        <strong id="a_acc" style="color: var(--success); font-size: 1.15rem; font-family: monospace;">--</strong>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">Observation Samples</span>
-                        <strong id="a_samples" style="color: var(--text-primary); font-size: 1.15rem; font-family: monospace;">--</strong>
-                    </div>
-                    <div style="display: flex; flex-direction: column; margin-top: 0.5rem;">
-                        <span style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Top Feature Importances</span>
-                        <div id="a_feats" style="display:flex; flex-wrap:wrap; gap: 0.5rem;"></div>
-                    </div>
+                <div class="metric-row">
+                    <span class="label">Dataset Samples</span>
+                    <strong id="a_samples" class="value">--</strong>
+                </div>
+                <div class="top-features-group">
+                    <span class="label">Top Features</span>
+                    <div id="a_feats" class="features-tags"></div>
                 </div>
             </div>
+        </div>
 
-            <div class="application-select-group" style="margin-bottom: 2rem;">
-                <h2 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Monitoring Focus</h2>
-                <p class="subtitle">Select the machine application</p>
-                <select id="applicationSelect" class="form-select" style="width: 100%; padding: 0.75rem; border-radius: 8px; background: var(--panel-bg); color: var(--text-primary); border: 1px solid var(--panel-border); margin-top: 0.5rem; cursor: pointer;">
+        <!-- Monitoring Focus Selector -->
+        <div class="sidebar-card">
+            <h2>Monitoring Focus</h2>
+            <div class="select-wrapper">
+                <select id="applicationSelect" class="cyber-select">
                     <option value="General">General Monitoring (All Faults)</option>
                     <option value="Bearing Monitoring">Bearing Monitoring (BPFI, BPFO)</option>
                     <option value="Motor Performance">Motor Performance (Balance, Align)</option>
                 </select>
             </div>
+        </div>
 
-            <h2 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Data Input</h2>
-            <p class="subtitle">Upload synchronized sensor batches</p>
-            
+        <!-- Data Input Box -->
+        <div class="sidebar-card">
+            <h2>Data Input</h2>
+            <p class="desc">Upload sensor telemetry batches</p>
             <form id="uploadForm">
                 <div class="drop-zone" id="vibDrop">
                     <span class="drop-icon">〰️</span>
-                    <p><strong>Vibration (.mat)</strong></p>
-                    <p class="helper-text">Measures mechanical oscillations</p>
-                    <p>Drag & drop or click</p>
+                    <div class="drop-text">
+                        <span class="title">Vibration (.mat)</span>
+                        <span class="filename" id="vibName">Select .mat file</span>
+                    </div>
                     <input type="file" id="vibFile" accept=".mat" required>
-                    <span class="filename" id="vibName"></span>
                 </div>
 
                 <div class="drop-zone" id="acousDrop">
                     <span class="drop-icon">🔊</span>
-                    <p><strong>Acoustic (.mat)</strong></p>
-                    <p class="helper-text">Measures sound and noise emissions</p>
-                    <p>Drag & drop or click</p>
+                    <div class="drop-text">
+                        <span class="title">Acoustic (.mat)</span>
+                        <span class="filename" id="acousName">Select .mat file</span>
+                    </div>
                     <input type="file" id="acousFile" accept=".mat" required>
-                    <span class="filename" id="acousName"></span>
                 </div>
 
                 <div class="drop-zone" id="tdmsDrop">
                     <span class="drop-icon">⚡</span>
-                    <p><strong>Current & Temp (.tdms)</strong></p>
-                    <p class="helper-text">Measures electrical current & heat</p>
-                    <p>Drag & drop or click</p>
+                    <div class="drop-text">
+                        <span class="title">Current & Temp (.tdms)</span>
+                        <span class="filename" id="tdmsName">Select .tdms file</span>
+                    </div>
                     <input type="file" id="tdmsFile" accept=".tdms" required>
-                    <span class="filename" id="tdmsName"></span>
                 </div>
 
-
-                <button type="submit" class="btn-primary" id="analyzeBtn" disabled>Analyze Telemetry</button>
+                <button type="submit" class="btn-analyze" id="analyzeBtn" disabled>
+                    <span>Analyze Telemetry</span>
+                </button>
             </form>
 
-            <div id="loading" class="hidden">
-                <div class="spinner"></div>
+            <div id="loading" class="cyber-loader hidden">
+                <div class="loader-spinner"></div>
                 <p>Extracting Features & Inferring...</p>
             </div>
-        </aside>
+        </div>
+    </aside>
 
-        <!-- Main Content: Results -->
-        <section class="results-section">
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Bar Header -->
+        <header class="top-bar">
+            <div class="top-actions">
+                <div class="date-selector">
+                    <span>Live Telemetry Panel</span>
+                </div>
+                <div class="user-profile">
+                    <div class="avatar">O</div>
+                    <span>Operator</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Results Grid Layout -->
+        <div class="results-grid">
             
-            <!-- Diagnosis Banner -->
-            <div class="diagnosis-banner glass-panel hidden" id="resultBanner">
-                <div class="diagnosis-header">
-                    <h2>Predicted Machine State</h2>
-                    <span class="confidence-tag" id="mainConfidence">--%</span>
+            <!-- KPI 1: Predicted State (matches yellow Total Alerts card) -->
+            <div class="kpi-card glass-card yellow-card hidden" id="resultBanner">
+                <div class="kpi-header">
+                    <span>Predicted Machine State</span>
+                    <span class="kpi-tag" id="mainConfidence">--%</span>
                 </div>
-                <h1 class="state-text normal" id="predictedState">Awaiting Data...</h1>
+                <h1 class="kpi-val" id="predictedState">Awaiting Data...</h1>
             </div>
 
-            <!-- Remediation Card -->
-            <div class="glass-panel hidden" id="remediationCard" style="margin-bottom: 1.5rem; border-left: 4px solid var(--accent);">
-                <div style="padding: 1.25rem;">
-                    <h3 style="color: var(--accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                        Diagnostic Insight & Remediation
-                    </h3>
-                    <p id="remediationText" style="font-size: 1.1rem; line-height: 1.6; color: var(--text-primary);">Processing prediction...</p>
-                    <div id="controlSection" class="hidden" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; font-family: monospace; text-transform: uppercase; letter-spacing: 0.05em;">Automated Control Suggestion:</p>
-                        <p id="controlActionText" style="font-weight: 600; color: #facc15; margin-bottom: 1.25rem;"></p>
-                        <button id="applyRemediationBtn" class="btn-primary" style="background: var(--accent); width: auto; padding: 0.6rem 1.5rem; font-size: 0.9rem;">Execute Remediation Protocol</button>
-                    </div>
-                    <div id="simulationOverlay" class="hidden" style="margin-top: 1.5rem;">
-                        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 0.5rem;">
-                            <div id="simProgress" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s ease;"></div>
-                        </div>
-                        <p id="simStatus" style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">Syncing with machine controllers...</p>
-                    </div>
+            <!-- KPI 2: Model Info KPI card -->
+            <div class="kpi-card glass-card hidden" id="kpiModel">
+                <div class="kpi-header">
+                    <span>Model Engine</span>
+                    <span class="kpi-tag">RF+IForest</span>
                 </div>
+                <h1 class="kpi-val">Hybrid</h1>
             </div>
 
-            <!-- Real-Time Monitoring Chart -->
-            <div class="glass-panel hidden" id="healthMonitorCard" style="margin-bottom: 2rem;">
-                <h3 style="margin-bottom: 0.5rem; color: #fff; font-weight: 500;">Live System Health Monitoring</h3>
-                <p class="card-desc" style="margin-bottom: 1.5rem;">Tracking signal stability and anomaly levels in real-time.</p>
-                <div class="chart-container" style="height: 200px;">
+            <!-- KPI 3: Accuracy KPI card -->
+            <div class="kpi-card glass-card hidden" id="kpiAccuracy">
+                <div class="kpi-header">
+                    <span>Validation Accuracy</span>
+                    <span class="kpi-tag text-lime">Live</span>
+                </div>
+                <h1 class="kpi-val text-lime">99.25%</h1>
+            </div>
+
+            <!-- KPI 4: Active Application Focus -->
+            <div class="kpi-card glass-card hidden" id="kpiFocus">
+                <div class="kpi-header">
+                    <span>Active Sensor Focus</span>
+                    <span class="kpi-tag">Healthy</span>
+                </div>
+                <h1 class="kpi-val">General</h1>
+            </div>
+
+            <!-- Health Monitor Line Chart Card (Row 2, spans columns) -->
+            <div class="panel-card glass-card hidden" id="healthMonitorCard">
+                <div class="panel-header">
+                    <h3>Live System Health Monitoring</h3>
+                    <p class="desc">Tracking signal stability and anomaly levels in real-time.</p>
+                </div>
+                <div class="chart-container">
                     <canvas id="healthChart"></canvas>
                 </div>
             </div>
 
-            <div class="dashboard-grid">
-                <!-- Confidence Probabilities -->
-                <div class="chart-card glass-panel hidden" id="probCard">
-                    <h3>Diagnosis Confidence Distribution</h3>
-                    <div class="chart-container">
-                        <canvas id="confidenceChart"></canvas>
+            <!-- Remediation Card (Row 2, right side) -->
+            <div class="panel-card glass-card remediation-card hidden" id="remediationCard">
+                <h3>Diagnostic Insight & Control Suggestion</h3>
+                <div class="remediation-content">
+                    <p id="remediationText">Processing prediction...</p>
+                    <div id="controlSection" class="hidden">
+                        <span class="section-title">Automated Control Action:</span>
+                        <p id="controlActionText" class="action-text"></p>
+                        <button id="applyRemediationBtn" class="btn-execute">Execute Remediation Protocol</button>
                     </div>
-                </div>
-
-                <!-- Feature Radar -->
-                <div class="chart-card glass-panel hidden" id="radarCard">
-                    <h3>Sensor Feature Profile (Fingerprint)</h3>
-                    <p class="card-desc">Visual representation of key signal characteristics.</p>
-                    <div class="chart-container radar-container">
-                        <canvas id="radarChart"></canvas>
+                    <div id="simulationOverlay" class="hidden">
+                        <div class="progress-bar">
+                            <div id="simProgress" class="progress-fill"></div>
+                        </div>
+                        <p id="simStatus">Syncing with machine controllers...</p>
                     </div>
                 </div>
             </div>
-            
-            <!-- XAI Section -->
-            <div class="xai-section glass-panel hidden" id="xaiCard">
+
+            <!-- Radar Profile Card (Row 3, left) -->
+            <div class="panel-card glass-card hidden" id="radarCard">
+                <h3>Sensor Feature Profile (Fingerprint)</h3>
+                <p class="desc">Visual representation of key signal characteristics.</p>
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Confidence distribution Chart Card (Row 3, center) -->
+            <div class="panel-card glass-card hidden" id="probCard">
+                <h3>Diagnosis Confidence Distribution</h3>
+                <p class="desc">Relative probability of each state class.</p>
+                <div class="chart-container">
+                    <canvas id="confidenceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- XAI Extracted Features Pills Matrix Card (Row 3, right) -->
+            <div class="panel-card glass-card hidden" id="xaiCard">
                 <h3>Extracted Telemetry Features</h3>
+                <p class="desc">Real-time values of extracted statistical features.</p>
                 <div class="feature-pills" id="featurePills">
-                    <!-- Feature pills will be injected here -->
+                    <!-- Feature pills injected here -->
                 </div>
             </div>
 
-        </section>
+        </div>
     </main>
 
     <script src="app.js"></script>
