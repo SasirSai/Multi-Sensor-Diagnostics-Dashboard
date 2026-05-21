@@ -1,0 +1,73 @@
+{
+    "architecture": "Pure Random Forest (28-Feature Upgraded)",
+    "accuracy": 100.0,
+    "total_samples": 38052,
+    "train_samples": 28368,
+    "test_samples": 9684,
+    "n_features": 197,
+    "best_cv_f1_macro": 74.68,
+    "best_rf_params": {
+        "n_estimators": 200,
+        "min_samples_split": 5,
+        "min_samples_leaf": 2,
+        "max_features": "log2",
+        "max_depth": 30,
+        "class_weight": "balanced"
+    },
+    "top_10_features": [
+        "TDMS_Ch0_RMS",
+        "Vib_StdDev",
+        "Vib_WaveformLength",
+        "Vib_SpectralEnergy",
+        "TDMS_Ch0_SpectralEnergy",
+        "TDMS_Ch0_Mean",
+        "TDMS_Ch1_Mean",
+        "TDMS_Ch1_RMS",
+        "Vib_P2P",
+        "TDMS_Ch1_SpectralEnergy"
+    ],
+    "classes": [
+        "BPFI",
+        "BPFO",
+        "Misalign",
+        "Normal",
+        "Unbalance"
+    ],
+    "macro_avg_f1": 100.0,
+    "per_class": {
+        "BPFI": {
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1": 100.0
+        },
+        "BPFO": {
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1": 100.0
+        },
+        "Misalign": {
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1": 100.0
+        },
+        "Unbalance": {
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1": 100.0
+        }
+    },
+    "test_files": [
+        "0Nm_BPFI_10.mat",
+        "0Nm_BPFO_30.mat",
+        "0Nm_Misalign_03.mat",
+        "0Nm_Unbalance_3318mg.mat",
+        "2Nm_BPFI_03.mat",
+        "2Nm_BPFO_10.mat",
+        "2Nm_Misalign_03.mat",
+        "2Nm_Unbalalnce_3318mg.mat",
+        "4Nm_BPFI_03.mat",
+        "4Nm_BPFO_30.mat",
+        "4Nm_Misalign_01.mat",
+        "4Nm_Unbalance_3318mg.mat"
+    ]
+}

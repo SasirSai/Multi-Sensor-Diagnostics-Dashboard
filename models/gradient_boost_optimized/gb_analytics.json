@@ -1,0 +1,72 @@
+{
+    "architecture": "HistGradientBoosting + Isolation Forest (Feature Injection) [Optimized]",
+    "accuracy": 89.67,
+    "total_samples": 38052,
+    "train_samples": 28368,
+    "test_samples": 9684,
+    "n_features": 142,
+    "best_gb_params": {
+        "min_samples_leaf": "10",
+        "max_leaf_nodes": "127",
+        "max_iter": "100",
+        "max_depth": "8",
+        "learning_rate": "0.2",
+        "l2_regularization": "0.0"
+    },
+    "top_5_features": [
+        "TDMS_Ch3_StdDev",
+        "TDMS_Ch0_Mean",
+        "Vib_P2P",
+        "Vib_StdDev",
+        "Vib_Top1_Freq"
+    ],
+    "classes": [
+        "BPFI",
+        "BPFO",
+        "Misalign",
+        "Normal",
+        "Unbalance"
+    ],
+    "macro_avg_f1": 73.79,
+    "per_class": {
+        "BPFI": {
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1": 100.0
+        },
+        "BPFO": {
+            "precision": 100.0,
+            "recall": 100.0,
+            "f1": 100.0
+        },
+        "Misalign": {
+            "precision": 100.0,
+            "recall": 66.67,
+            "f1": 80.0
+        },
+        "Normal": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+        },
+        "Unbalance": {
+            "precision": 80.06,
+            "recall": 100.0,
+            "f1": 88.93
+        }
+    },
+    "test_files": [
+        "0Nm_BPFI_10.mat",
+        "0Nm_BPFO_30.mat",
+        "0Nm_Misalign_03.mat",
+        "0Nm_Unbalance_3318mg.mat",
+        "2Nm_BPFI_03.mat",
+        "2Nm_BPFO_10.mat",
+        "2Nm_Misalign_03.mat",
+        "2Nm_Unbalalnce_3318mg.mat",
+        "4Nm_BPFI_03.mat",
+        "4Nm_BPFO_30.mat",
+        "4Nm_Misalign_01.mat",
+        "4Nm_Unbalance_3318mg.mat"
+    ]
+}
