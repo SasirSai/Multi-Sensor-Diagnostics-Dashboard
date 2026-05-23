@@ -1,0 +1,13 @@
+{
+    "model": "Proposed Pure RF",
+    "test_accuracy": 97.07,
+    "test_samples": 9684,
+    "per_class_auc": {
+        "BPFI": 1.0,
+        "BPFO": 1.0,
+        "Misalign": 1.0,
+        "Normal": NaN,
+        "Unbalance": 1.0
+    },
+    "micro_average_auc": 0.9997
+}

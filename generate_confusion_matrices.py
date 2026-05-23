@@ -115,6 +115,52 @@ def extract_features_sujith(signal):
     
     return [mean, std, rms, kurt, skw, ptp, spectral_energy, float(peak_freq)]
 
+def extract_features_hybrid_baseline(signal):
+    """Extract 17 features expected by the Advanced Hybrid model."""
+    if len(signal) == 0:
+        return [0.0]*17
+    signal = signal[~np.isnan(signal)]
+    if len(signal) == 0:
+        return [0.0]*17
+        
+    mean_val = np.mean(signal)
+    std = np.std(signal)
+    rms = np.sqrt(np.mean(signal**2))
+    kurt = float(kurtosis(signal))
+    skw = float(skew(signal))
+    ptp = np.ptp(signal)
+    
+    peak = np.max(np.abs(signal))
+    mean_abs = np.mean(np.abs(signal))
+    sqr_mean_root = np.mean(np.sqrt(np.abs(signal)))**2
+    
+    crest_factor = peak / rms if rms > 0 else 0.0
+    shape_factor = rms / mean_abs if mean_abs > 0 else 0.0
+    impulse_factor = peak / mean_abs if mean_abs > 0 else 0.0
+    clearance_factor = peak / sqr_mean_root if sqr_mean_root > 0 else 0.0
+    
+    fft_vals = np.abs(np.fft.rfft(signal))
+    spectral_energy = np.sum(fft_vals**2) / len(fft_vals) if len(fft_vals) > 0 else 0.0
+    
+    if len(fft_vals) > 3:
+        fft_vals[0] = 0.0
+        top3_idx = np.argsort(fft_vals)[-3:][::-1]
+        top3_freqs = [float(i) for i in top3_idx]
+        top3_amps = [float(fft_vals[i]) for i in top3_idx]
+    else:
+        top3_freqs = [0.0, 0.0, 0.0]
+        top3_amps = [0.0, 0.0, 0.0]
+        
+    return [
+        float(mean_val), float(std), float(rms), kurt, skw, float(ptp),
+        float(spectral_energy),
+        float(crest_factor), float(shape_factor),
+        float(impulse_factor), float(clearance_factor),
+        top3_freqs[0], top3_amps[0],
+        top3_freqs[1], top3_amps[1],
+        top3_freqs[2], top3_amps[2]
+    ]
+
 # =============================================================================
 # DATA EXTRACTION FOR TEST FILES
 # =============================================================================
@@ -134,6 +180,7 @@ def extract_test_data(base_dir, test_files):
     # Pre-allocate containers
     X_test_upgraded = []
     X_test_sujith = []
+    X_test_hb = []
     y_test_labels = []
     
     print(f"Extracting features from {len(test_files)} isolated test files...")
@@ -195,6 +242,12 @@ def extract_test_data(base_dir, test_files):
                 else:
                     row_suj.extend(row_suj[:8]) # Replicate vib if missing
                 
+                # 3. HYBRID BASELINE FEATURE VECTOR (17 per sensor)
+                row_hb = []
+                row_hb.extend(extract_features_hybrid_baseline(vib_signal[v_idx:v_idx+vib_chunk_size]))
+                row_hb.extend(extract_features_hybrid_baseline(acous_signal[v_idx:v_idx+vib_chunk_size]))
+                row_hb.append(acoustic_missing)
+                
                 # Process TDMS channels
                 for ch_idx, ch in enumerate(tdms_channels):
                     t_chunk = tdms_chunk_sizes[ch_idx]
@@ -203,15 +256,17 @@ def extract_test_data(base_dir, test_files):
                     
                     row_up.extend(extract_features_upgraded(ch_signal))
                     row_suj.extend(extract_features_sujith(ch_signal))
+                    row_hb.extend(extract_features_hybrid_baseline(ch_signal))
                     
                 X_test_upgraded.append(row_up)
                 X_test_sujith.append(row_suj)
+                X_test_hb.append(row_hb)
                 y_test_labels.append(label)
                 
         except Exception as e:
             print(f"Failed to process test file {filename}: {e}")
             
-    return np.array(X_test_upgraded), np.array(X_test_sujith), np.array(y_test_labels)
+    return np.array(X_test_upgraded), np.array(X_test_sujith), np.array(X_test_hb), np.array(y_test_labels)
 
 # =============================================================================
 # CONFUSION MATRIX PLOTTING
@@ -316,32 +371,32 @@ def main():
         test_files = json.load(f)
         
     # Extract test features once
-    X_test_upgraded, X_test_sujith, y_test = extract_test_data(BASE_DIR, test_files)
+    X_test_upgraded, X_test_sujith, X_test_hb, y_test = extract_test_data(BASE_DIR, test_files)
     print(f"Test samples extracted: {len(y_test)}")
     
     # Paths mapping
     models_paths = {
-        "Optimized Hybrid (RF + IF)": {
-            "clf": os.path.join(model_dir, "hybrid_optimized", "rf_model_hybrid.joblib"),
-            "iso": os.path.join(model_dir, "hybrid_optimized", "isolation_forest.joblib"),
-            "features_type": "upgraded_hybrid",
-            "save_name": "confusion_matrix_hybrid"
-        },
-        "Upgraded Pure RF": {
+        "Proposed Pure RF": {
             "clf": os.path.join(model_dir, "rf_model.joblib"),
             "features_type": "upgraded_pure",
-            "save_name": "confusion_matrix_pure_rf"
+            "save_name": "confusion_matrix_proposed_pure_rf"
         },
-        "Corrected Sujith RF + IF": {
-            "clf": os.path.join(model_dir, "sujith_corrected", "rf_model.joblib"),
+        "Advanced Hybrid (RF-IF)": {
+            "clf": os.path.join(model_dir, "hybrid", "rf_model_hybrid.joblib"),
+            "iso": os.path.join(model_dir, "hybrid", "isolation_forest.joblib"),
+            "features_type": "hybrid_advanced",
+            "save_name": "confusion_matrix_advanced_hybrid"
+        },
+        "Conventional Hybrid (RF-IF)": {
+            "clf": os.path.join(model_dir, "conventional_hybrid", "rf_model.joblib"),
             "features_type": "sujith",
-            "save_name": "confusion_matrix_sujith"
+            "save_name": "confusion_matrix_conventional_hybrid"
         },
-        "Optimized GB + IF": {
+        "Optimized Gradient Boosting (GB-IF)": {
             "clf": os.path.join(model_dir, "gradient_boost_optimized", "gb_model.joblib"),
             "iso": os.path.join(model_dir, "gradient_boost_optimized", "isolation_forest.joblib"),
             "features_type": "upgraded_hybrid",
-            "save_name": "confusion_matrix_gb"
+            "save_name": "confusion_matrix_optimized_gb"
         }
     }
     
@@ -361,6 +416,10 @@ def main():
             iso = joblib.load(config["iso"])
             anomaly_scores = iso.decision_function(X_test_upgraded).reshape(-1, 1)
             X_eval = np.hstack([X_test_upgraded, anomaly_scores])
+        elif config["features_type"] == "hybrid_advanced":
+            iso = joblib.load(config["iso"])
+            anomaly_scores = iso.decision_function(X_test_hb).reshape(-1, 1)
+            X_eval = np.hstack([X_test_hb, anomaly_scores])
         elif config["features_type"] == "upgraded_pure":
             X_eval = X_test_upgraded
         else: # sujith
