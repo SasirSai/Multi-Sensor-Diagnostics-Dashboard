@@ -89,11 +89,15 @@ def main():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     dataset_dir = os.path.join(BASE_DIR, "Dataset")
     if not os.path.exists(dataset_dir):
-        dataset_dir = os.path.join(os.path.dirname(BASE_DIR), "data")
+        raw_dir = os.path.join(BASE_DIR, "data", "raw")
+        if os.path.exists(raw_dir):
+            dataset_dir = raw_dir
+        else:
+            dataset_dir = os.path.join(BASE_DIR, "data")
 
     vibration_dir = os.path.join(dataset_dir, "vibration")
     acoustic_dir = os.path.join(dataset_dir, "acoustic")
-    current_temp_dir = os.path.join(dataset_dir, "current,temp")
+    current_temp_dir = os.path.join(dataset_dir, "current_temp")
 
     classes = ['Normal', 'BPFI', 'BPFO', 'Misalign', 'Unbalance']
 
@@ -303,9 +307,10 @@ def main():
     best_clf = clf.best_estimator_
 
     y_pred = best_clf.predict(X_test)
+    eval_classes = ['BPFI', 'BPFO', 'Misalign', 'Unbalance']
     acc = accuracy_score(y_test, y_pred)
-    report_str = classification_report(y_test, y_pred)
-    report_dct = classification_report(y_test, y_pred, output_dict=True)
+    report_str = classification_report(y_test, y_pred, labels=eval_classes, zero_division=0)
+    report_dct = classification_report(y_test, y_pred, labels=eval_classes, output_dict=True, zero_division=0)
 
     print(f"\nFinal Genuine Test Accuracy: {acc * 100:.2f}%")
     print("\nClassification Report (on Unseen Hold-out Files across all Torques):")

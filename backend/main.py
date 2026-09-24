@@ -34,23 +34,81 @@ except Exception as e:
     clf, feature_names, classes = None, None, None
 
 def extract_features(signal):
-    """Extract statistical features from a 1D time-series signal."""
+    """Extract advanced statistical, harmonic, and spectral features from a 1D time-series signal."""
     if len(signal) == 0:
-        return [0]*8
+        return [0.0] * 20
+    signal = signal[~np.isnan(signal)]
+    if len(signal) == 0:
+        return [0.0] * 20
         
-    mean = np.mean(signal)
+    mean_val = np.mean(signal)
     std = np.std(signal)
     rms = np.sqrt(np.mean(signal**2))
     kurt = float(kurtosis(signal))
     skw = float(skew(signal))
     ptp = np.ptp(signal)
     
+    # Advanced Diagnostics Features (Time-Domain)
+    peak = np.max(np.abs(signal))
+    mean_abs = np.mean(np.abs(signal))
+    sqr_mean_root = np.mean(np.sqrt(np.abs(signal)))**2
+    
+    crest_factor = peak / rms if rms > 0 else 0.0
+    shape_factor = rms / mean_abs if mean_abs > 0 else 0.0
+    impulse_factor = peak / mean_abs if mean_abs > 0 else 0.0
+    clearance_factor = peak / sqr_mean_root if sqr_mean_root > 0 else 0.0
+    
     # Frequency domain features (FFT)
     fft_vals = np.abs(np.fft.rfft(signal))
-    spectral_energy = np.sum(fft_vals**2) / len(fft_vals)
-    peak_freq = np.argmax(fft_vals)
+    spectral_energy = np.sum(fft_vals**2) / len(fft_vals) if len(fft_vals) > 0 else 0.0
     
-    return [float(mean), float(std), float(rms), kurt, skw, float(ptp), float(spectral_energy), float(peak_freq)]
+    # Spectral Entropy, Centroid, and Spread
+    if len(fft_vals) > 0:
+        psd = fft_vals**2 / (np.sum(fft_vals**2) + 1e-12)
+        spectral_entropy = -np.sum(psd * np.log2(psd + 1e-12))
+        freqs = np.arange(len(fft_vals))
+        spectral_centroid = np.sum(freqs * fft_vals) / (np.sum(fft_vals) + 1e-12)
+        spectral_spread = np.sqrt(np.sum(((freqs - spectral_centroid)**2) * fft_vals) / (np.sum(fft_vals) + 1e-12))
+    else:
+        spectral_entropy = 0.0
+        spectral_centroid = 0.0
+        spectral_spread = 0.0
+    
+    # Extract Top 3 distinct harmonic peaks (using peak separation to avoid adjacent bin leakage)
+    top3_freqs = [0.0, 0.0, 0.0]
+    top3_amps = [0.0, 0.0, 0.0]
+    
+    if len(fft_vals) > 10:
+        fft_vals_copy = fft_vals.copy()
+        fft_vals_copy[0] = 0.0  # Skip DC
+        
+        for k in range(3):
+            idx = np.argmax(fft_vals_copy)
+            amp = fft_vals_copy[idx]
+            if amp == 0.0:
+                break
+            top3_freqs[k] = float(idx)
+            top3_amps[k] = float(amp)
+            
+            # Zero out neighborhood around the peak to ensure next peak is distinct
+            start_idx = max(0, idx - 10)
+            end_idx = min(len(fft_vals_copy), idx + 11)
+            fft_vals_copy[start_idx:end_idx] = 0.0
+    
+    return [float(mean_val), float(std), float(rms), kurt, skw, float(ptp), float(spectral_energy),
+            float(crest_factor), float(shape_factor), float(impulse_factor), float(clearance_factor),
+            float(spectral_entropy), float(spectral_centroid), float(spectral_spread),
+            top3_freqs[0], top3_amps[0], top3_freqs[1], top3_amps[1], top3_freqs[2], top3_amps[2]]
+
+def safe_remove(path):
+    import time
+    for _ in range(5):
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+            return
+        except OSError:
+            time.sleep(0.1)
 
 # define mappings for applications and remediation
 APPLICATION_MAPPING = {
@@ -166,6 +224,10 @@ async def predict(
             # Extract Acoustic
             row_features.extend(extract_features(acous_signal[v_idx:v_idx+vib_chunk_size]))
             
+            # Acoustic missing flag
+            acoustic_missing = 0.0 if len(acous_signal) > 0 else 1.0
+            row_features.append(acoustic_missing)
+            
             # Extract TDMS Channels
             for ch_idx, ch in enumerate(tdms_channels):
                 t_chunk = tdms_chunk_sizes[ch_idx]
@@ -199,17 +261,6 @@ async def predict(
             "advice": "No specific remediation advice available.",
             "control_action": "Manual inspection required."
         })
-        
-        # Helper for safer file removal on Windows
-        def safe_remove(path):
-            import time
-            for _ in range(5):
-                try:
-                    if os.path.exists(path):
-                        os.remove(path)
-                    return
-                except OSError:
-                    time.sleep(0.1)
         
         # Clean up
         safe_remove(vib_path)
