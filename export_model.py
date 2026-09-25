@@ -8,13 +8,64 @@ from nptdms import TdmsFile
 from sklearn.ensemble import RandomForestClassifier
 from scipy.stats import kurtosis, skew
 import joblib
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, f1_score
 from sklearn.model_selection import RandomizedSearchCV, GroupKFold
 from collections import defaultdict
 import warnings
 
 # Suppress annoying scipy kurtosis warnings on flat signals
 warnings.filterwarnings('ignore', message='Precision loss occurred in moment calculation')
+
+
+def split_grouped_files(files_by_group, seed=42, val_ratio=0.2, test_ratio=0.2):
+    """Partition files into train/validation/test splits without overlap.
+
+    This protects against leakage from repeated windows within the same file or
+    similar operating conditions being mixed across splits.
+    """
+    random.seed(seed)
+    train_files, val_files, test_files = set(), set(), set()
+
+    for _, files in files_by_group.items():
+        files = sorted(files)
+        random.shuffle(files)
+        n = len(files)
+
+        if n <= 1:
+            train_files.update(files)
+            continue
+        if n == 2:
+            test_files.add(files[0])
+            train_files.add(files[1])
+            continue
+        if n == 3:
+            test_files.add(files[0])
+            val_files.add(files[1])
+            train_files.add(files[2])
+            continue
+
+        test_count = max(1, int(round(n * test_ratio)))
+        if n - test_count <= 2:
+            test_count = max(1, n - 2)
+
+        remaining = n - test_count
+        val_count = max(1, int(round(remaining * val_ratio))) if remaining > 2 else 0
+        if remaining - val_count <= 1:
+            val_count = max(0, remaining - 1)
+
+        train_count = remaining - val_count
+        if train_count < 1:
+            train_count = 1
+            val_count = max(0, remaining - train_count)
+
+        for f in files[:test_count]:
+            test_files.add(f)
+        for f in files[test_count:test_count + val_count]:
+            val_files.add(f)
+        for f in files[test_count + val_count:test_count + val_count + train_count]:
+            train_files.add(f)
+
+    return train_files, val_files, test_files
 
 
 def extract_features(signal):
@@ -138,25 +189,18 @@ def main():
         group_key = f"{label}_{torque}"
         files_by_group[group_key].append(filename)
 
-    train_files = set()
-    test_files = set()
-    random.seed(42)
+    train_files, val_files, test_files = split_grouped_files(files_by_group, seed=42)
 
-    for group_key, files in files_by_group.items():
-        files.sort()
-        random.shuffle(files)
-        n_test = max(1, int(len(files) * 0.2)) if len(files) > 1 else 0
-        for f in files[:n_test]:
-            test_files.add(f)
-        for f in files[n_test:]:
-            train_files.add(f)
-
-    print(f"File Split Complete: {len(train_files)} Train files, {len(test_files)} Test files")
+    print(
+        f"File Split Complete: {len(train_files)} Train files, "
+        f"{len(val_files)} Validation files, {len(test_files)} Test files"
+    )
 
     # ------------------------------------------------------------------ #
     # 2.  FEATURE EXTRACTION                                              #
     # ------------------------------------------------------------------ #
     X_train_list, y_train_list, groups_train_list = [], [], []
+    X_val_list, y_val_list = [], []
     X_test_list, y_test_list = [], []
 
     print("Parsing Multi-Sensor Data and Extracting 20-Feature Vectors...")
@@ -247,6 +291,9 @@ def main():
                     if filename in test_files:
                         X_test_list.append(row_features)
                         y_test_list.append(label)
+                    elif filename in val_files:
+                        X_val_list.append(row_features)
+                        y_val_list.append(label)
                     else:
                         X_train_list.append(row_features)
                         y_train_list.append(label)
@@ -256,16 +303,18 @@ def main():
             print(f"Failed to process {filename}: {e}")
 
     print(
-        f"Extraction Complete.  Train samples: {len(X_train_list)}, "
-        f"Test samples: {len(X_test_list)}"
+        f"Extraction Complete. Train samples: {len(X_train_list)}, "
+        f"Validation samples: {len(X_val_list)}, Test samples: {len(X_test_list)}"
     )
 
-    if len(X_train_list) == 0 or len(X_test_list) == 0:
-        print("Error: Could not extract enough data for training or testing.")
+    if len(X_train_list) == 0 or len(X_val_list) == 0 or len(X_test_list) == 0:
+        print("Error: Need train, validation, and test data for a safe ML pipeline.")
         return
 
     X_train = np.array(X_train_list)
     y_train = np.array(y_train_list)
+    X_val = np.array(X_val_list)
+    y_val = np.array(y_val_list)
     X_test = np.array(X_test_list)
     y_test = np.array(y_test_list)
 
@@ -306,13 +355,39 @@ def main():
     print(f"Best CV F1-macro: {clf.best_score_ * 100:.2f}%")
     best_clf = clf.best_estimator_
 
+    y_train_pred = best_clf.predict(X_train)
+    y_val_pred = best_clf.predict(X_val)
     y_pred = best_clf.predict(X_test)
-    eval_classes = ['BPFI', 'BPFO', 'Misalign', 'Unbalance']
-    acc = accuracy_score(y_test, y_pred)
+    eval_classes = ['Normal', 'BPFI', 'BPFO', 'Misalign', 'Unbalance']
+
+    train_acc = accuracy_score(y_train, y_train_pred)
+    val_acc = accuracy_score(y_val, y_val_pred)
+    test_acc = accuracy_score(y_test, y_pred)
+
+    train_f1 = f1_score(y_train, y_train_pred, average='macro', labels=eval_classes, zero_division=0)
+    val_f1 = f1_score(y_val, y_val_pred, average='macro', labels=eval_classes, zero_division=0)
+    test_f1 = f1_score(y_test, y_pred, average='macro', labels=eval_classes, zero_division=0)
+
+    if val_f1 < 0.6:
+        raise ValueError(
+            f"Validation F1-score too low for safe deployment: {val_f1:.3f}. "
+            "Improve the model or dataset before saving a production model."
+        )
+
+    if train_f1 - val_f1 > 0.25:
+        print(
+            "Warning: Large train/validation gap detected. This may indicate overfitting or leakage. "
+            "Review the data split and feature engineering before deployment."
+        )
+
     report_str = classification_report(y_test, y_pred, labels=eval_classes, zero_division=0)
     report_dct = classification_report(y_test, y_pred, labels=eval_classes, output_dict=True, zero_division=0)
 
-    print(f"\nFinal Genuine Test Accuracy: {acc * 100:.2f}%")
+    print(f"\nTrain Accuracy: {train_acc * 100:.2f}%")
+    print(f"Validation Accuracy: {val_acc * 100:.2f}%")
+    print(f"Validation F1 (macro): {val_f1:.4f}")
+    print(f"\nFinal Genuine Test Accuracy: {test_acc * 100:.2f}%")
+    print(f"Test F1 (macro): {test_f1:.4f}")
     print("\nClassification Report (on Unseen Hold-out Files across all Torques):")
     print(report_str)
 
@@ -337,10 +412,14 @@ def main():
             best_params_clean[k] = v
 
     analytics = {
-        "accuracy": round(acc * 100, 2),
-        "total_samples": len(X_train) + len(X_test),
+        "accuracy": round(test_acc * 100, 2),
+        "validation_accuracy": round(val_acc * 100, 2),
+        "validation_f1_macro": round(val_f1, 4),
+        "test_f1_macro": round(test_f1, 4),
+        "total_samples": len(X_train) + len(X_val) + len(X_test),
         "top_features": top_features,
-        "classes": list(best_clf.classes_)
+        "classes": list(best_clf.classes_),
+        "status": "safe_to_deploy" if val_f1 >= 0.6 and train_f1 - val_f1 <= 0.25 else "requires_review"
     }
 
     # Persist weights

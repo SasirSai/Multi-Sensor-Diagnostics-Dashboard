@@ -1,0 +1,6 @@
+Sensor Configuration,Feature Dimensions,Accuracy,Macro-F1,Precision,Recall
+Vibration,20,1.0,0.8,0.8,0.8
+Vibration + Acoustic,41,1.0,0.8,0.8,0.8
+Vibration + Motor Current,80,0.999897,0.799967,0.8,0.799933
+Vibration + Temperature,60,0.957146,0.7722,0.775695,0.772333
+All Sensors,141,0.98069,0.787521,0.788265,0.787533

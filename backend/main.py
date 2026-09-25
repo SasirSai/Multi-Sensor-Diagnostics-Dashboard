@@ -11,6 +11,7 @@ from scipy.stats import kurtosis, skew
 import joblib
 
 app = FastAPI(title="Diagnostic API Dashboard")
+MIN_CONFIDENCE = 0.55
 
 # Configure CORS so the frontend can easily talk to the API
 app.add_middleware(
@@ -241,35 +242,47 @@ async def predict(
         # Get raw probabilities
         probabilities = clf.predict_proba(X)[0]
         prob_dict = {str(cls): float(prob) for cls, prob in zip(classes, probabilities)}
-        
-        # Filtering logic based on application
-        relevant_faults = APPLICATION_MAPPING.get(application, classes)
-        
-        # If the detected highest probability fault is NOT in the relevant list for this application,
-        # we can either flag it or re-distribute probabilities. 
-        # For simplicity and "diagnosis" focus, let's identify the strongest relevant fault.
-        relevant_probs = {f: prob_dict[f] for f in relevant_faults if f in prob_dict}
-        
-        if not relevant_probs:
-            # Fallback to general if mapping is broken
-            prediction = clf.predict(X)[0]
-        else:
-            # Predict based on highest probability within relevant faults
-            prediction = max(relevant_probs, key=relevant_probs.get)
+        prediction_label, confidence = max(prob_dict.items(), key=lambda item: item[1])
+        relevant_faults = set(APPLICATION_MAPPING.get(application, list(classes)))
 
-        remediation_data = REMEDIATION_MAPPING.get(prediction, {
-            "advice": "No specific remediation advice available.",
-            "control_action": "Manual inspection required."
-        })
-        
+        if confidence < MIN_CONFIDENCE:
+            prediction = "Uncertain"
+            remediation_data = {
+                "advice": "Prediction confidence is below the safety threshold. Manual inspection is required.",
+                "control_action": "Escalate to a human operator and do not act on this diagnosis automatically."
+            }
+            status = "needs_review"
+        elif application != "General" and prediction_label not in relevant_faults:
+            prediction = "Uncertain"
+            remediation_data = {
+                "advice": "The strongest prediction falls outside this application's fault scope. Manual inspection is required.",
+                "control_action": "Validate the operating condition and device configuration before action."
+            }
+            status = "application_mismatch"
+        else:
+            prediction = prediction_label
+            remediation_data = REMEDIATION_MAPPING.get(prediction, {
+                "advice": "No specific remediation advice available.",
+                "control_action": "Manual inspection required."
+            })
+            status = "ok"
+
         # Clean up
         safe_remove(vib_path)
         safe_remove(acous_path)
         safe_remove(tdms_path)
-        
+
+        if len(row_features) != len(feature_names):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Feature length mismatch: expected {len(feature_names)}, got {len(row_features)}"
+            )
+
         # Create response payload
         response = {
             "prediction": str(prediction),
+            "status": status,
+            "confidence": round(float(confidence), 4),
             "remediation": remediation_data["advice"],
             "control_action": remediation_data["control_action"],
             "application": application,
